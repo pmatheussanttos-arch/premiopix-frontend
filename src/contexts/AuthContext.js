@@ -6,35 +6,38 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       axios.get(`${API}/auth/me`)
         .then(r => setUser(r.data))
-        .catch(() => logout())
+        .catch(() => {
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const login = async (email, password) => {
     const r = await axios.post(`${API}/auth/login`, { email, password });
-    localStorage.setItem('token', r.data.access_token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${r.data.access_token}`;
-    setToken(r.data.access_token);
+    const token = r.data.access_token;
+    localStorage.setItem('token', token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(r.data.user);
     return r.data.user;
   };
 
   const register = async (nome, email, password, telefone, chave_pix) => {
     const r = await axios.post(`${API}/auth/register`, { nome, email, password, telefone, chave_pix });
-    localStorage.setItem('token', r.data.access_token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${r.data.access_token}`;
-    setToken(r.data.access_token);
+    const token = r.data.access_token;
+    localStorage.setItem('token', token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(r.data.user);
     return r.data.user;
   };
@@ -42,12 +45,11 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
-    setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
