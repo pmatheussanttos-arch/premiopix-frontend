@@ -5,6 +5,58 @@ import PixModal from '../components/PixModal';
 
 const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onrender.com') + '/api';
 
+function GoalPicker({ label, value, onChange }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {label}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button
+          onClick={() => onChange(Math.max(0, value - 1))}
+          style={{
+            width: 44, height: 44, borderRadius: 12,
+            border: '2px solid #e0e0e0', background: 'white',
+            fontSize: 22, cursor: 'pointer', fontWeight: 700, color: '#555',
+            transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = '#00C16A'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = '#e0e0e0'}
+        >
+          −
+        </button>
+        <div style={{
+          width: 64, height: 64,
+          background: 'linear-gradient(135deg, #071a2e, #0d2d4a)',
+          borderRadius: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: "'Bebas Neue'", fontSize: 42, color: 'white',
+          letterSpacing: 1,
+          boxShadow: '0 4px 16px rgba(7,26,46,0.25)',
+        }}>
+          {value}
+        </div>
+        <button
+          onClick={() => onChange(value + 1)}
+          style={{
+            width: 44, height: 44, borderRadius: 12,
+            border: '2px solid #e0e0e0', background: '#00C16A',
+            fontSize: 22, cursor: 'pointer', fontWeight: 700, color: 'white',
+            transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,193,106,0.3)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#00a857'}
+          onMouseLeave={e => e.currentTarget.style.background = '#00C16A'}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function PlacarDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,75 +81,157 @@ export default function PlacarDetalhe() {
       const r = await axios.post(`${API}/palpites/criar`, {
         jogo_id: parseInt(id),
         gols_casa: goalsCasa,
-        gols_fora: goalsFora
+        gols_fora: goalsFora,
       });
       setPagamento(r.data.pagamento);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Erro ao registrar aposta');
+      setError(e.response?.data?.detail || 'Erro ao registrar aposta. Faça login e tente novamente.');
     } finally { setSubmitting(false); }
   };
 
   if (loading) return <div className="loading-full"><div className="spinner"></div></div>;
   if (!jogo) return null;
 
+  const dataStr = new Date(jogo.data_hora).toLocaleString('pt-BR', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
   return (
-    <div style={{padding:'2rem 0'}}>
-      <div className="container" style={{maxWidth:560}}>
-        <button onClick={() => navigate(-1)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:14,marginBottom:'1.5rem'}}>← Voltar</button>
-        <div className="card">
-          <div style={{textAlign:'center',marginBottom:'1.5rem'}}>
-            <div className="badge badge-green" style={{marginBottom:10}}>{jogo.campeonato}</div>
-            <h1 style={{fontSize:32,marginBottom:6}}>{jogo.time_casa} × {jogo.time_fora}</h1>
-            <p style={{color:'var(--muted)',fontSize:14}}>
-              {new Date(jogo.data_hora).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
-            </p>
+    <div style={{ background: '#f8fafb', minHeight: '100vh', padding: '2rem 0 4rem' }}>
+      <div className="container" style={{ maxWidth: 520 }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#666', fontSize: 14, marginBottom: '1.5rem',
+            display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500,
+          }}
+        >
+          ← Voltar para jogos
+        </button>
+
+        {/* Card principal */}
+        <div style={{
+          background: 'white', borderRadius: 24,
+          boxShadow: '0 4px 30px rgba(0,0,0,0.10)',
+          overflow: 'hidden',
+        }}>
+          {/* Header do card */}
+          <div style={{
+            background: 'linear-gradient(135deg, #071a2e, #0d2d4a)',
+            padding: '1.5rem',
+            textAlign: 'center',
+            color: 'white',
+          }}>
+            <div style={{
+              display: 'inline-block', background: 'rgba(0,193,106,0.2)',
+              border: '1px solid rgba(0,193,106,0.5)',
+              borderRadius: 20, padding: '4px 14px', fontSize: 12,
+              color: '#00C16A', fontWeight: 700, marginBottom: 12, letterSpacing: 0.5,
+            }}>
+              ⚽ {jogo.campeonato}
+            </div>
+            <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, color: 'white' }}>
+              {jogo.time_casa} <span style={{ color: '#FFB800' }}>×</span> {jogo.time_fora}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>📅 {dataStr}</p>
           </div>
 
-          <div style={{background:'var(--gold-light)',borderRadius:12,padding:'1rem',textAlign:'center',marginBottom:'1.5rem'}}>
-            <div style={{fontSize:12,color:'#633806',marginBottom:4}}>💰 Prêmio do jogo</div>
-            <div style={{fontFamily:"'Bebas Neue'",fontSize:36,color:'var(--gold)'}}>R$ {jogo.premio_fixo?.toLocaleString('pt-BR')}</div>
-            <div style={{fontSize:12,color:'#633806'}}>Dividido entre todos que acertarem</div>
-          </div>
-
-          <div style={{marginBottom:'1.5rem'}}>
-            <p style={{fontWeight:500,marginBottom:'1rem',textAlign:'center'}}>Qual será o placar?</p>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'1.5rem'}}>
-              <div style={{textAlign:'center'}}>
-                <div style={{fontSize:13,color:'var(--muted)',marginBottom:6}}>{jogo.time_casa}</div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <button onClick={() => setGoalsCasa(Math.max(0, goalsCasa-1))} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:'white',fontSize:18,cursor:'pointer'}}>−</button>
-                  <span style={{fontFamily:"'Bebas Neue'",fontSize:48,minWidth:48,textAlign:'center'}}>{goalsCasa}</span>
-                  <button onClick={() => setGoalsCasa(goalsCasa+1)} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:'white',fontSize:18,cursor:'pointer'}}>+</button>
-                </div>
+          <div style={{ padding: '1.75rem' }}>
+            {/* Prêmio */}
+            <div style={{
+              background: 'linear-gradient(135deg, #fffbeb, #fff8d6)',
+              borderRadius: 14, padding: '1.2rem', textAlign: 'center',
+              marginBottom: '1.75rem', border: '1px solid #ffe082',
+            }}>
+              <div style={{ fontSize: 12, color: '#92400e', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                💰 Prêmio do Jogo
               </div>
-              <div style={{fontFamily:"'Bebas Neue'",fontSize:36,color:'var(--muted)'}}>×</div>
-              <div style={{textAlign:'center'}}>
-                <div style={{fontSize:13,color:'var(--muted)',marginBottom:6}}>{jogo.time_fora}</div>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <button onClick={() => setGoalsFora(Math.max(0, goalsFora-1))} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:'white',fontSize:18,cursor:'pointer'}}>−</button>
-                  <span style={{fontFamily:"'Bebas Neue'",fontSize:48,minWidth:48,textAlign:'center'}}>{goalsFora}</span>
-                  <button onClick={() => setGoalsFora(goalsFora+1)} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:'white',fontSize:18,cursor:'pointer'}}>+</button>
-                </div>
+              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 44, color: '#FFB800', letterSpacing: 2, lineHeight: 1 }}>
+                R$ {jogo.premio_fixo?.toLocaleString('pt-BR')}
+              </div>
+              <div style={{ fontSize: 12, color: '#92400e', marginTop: 4 }}>
+                Dividido igualmente entre todos que acertarem
               </div>
             </div>
-          </div>
 
-          {error && <div className="error-msg">{error}</div>}
+            {/* Seletor de placar */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <p style={{ fontWeight: 700, textAlign: 'center', marginBottom: '1.25rem', fontSize: 15, color: '#111' }}>
+                🎯 Qual será o placar final?
+              </p>
 
-          <div style={{background:'var(--bg)',borderRadius:10,padding:'12px 16px',marginBottom:'1rem',display:'flex',justifyContent:'space-between',fontSize:14}}>
-            <span style={{color:'var(--muted)'}}>Seu palpite</span>
-            <strong>{jogo.time_casa} {goalsCasa} × {goalsFora} {jogo.time_fora}</strong>
-          </div>
-          <div style={{background:'var(--bg)',borderRadius:10,padding:'12px 16px',marginBottom:'1.5rem',display:'flex',justifyContent:'space-between',fontSize:14}}>
-            <span style={{color:'var(--muted)'}}>Valor a pagar</span>
-            <strong style={{color:'var(--green)'}}>R$ {jogo.valor_palpite?.toFixed(2)}</strong>
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+                <GoalPicker label={jogo.time_casa} value={goalsCasa} onChange={setGoalsCasa} />
 
-          <button className="btn btn-primary btn-full btn-lg" onClick={apostar} disabled={submitting}>
-            {submitting ? 'Gerando PIX...' : `✅ Confirmar e Pagar R$ ${jogo.valor_palpite?.toFixed(2)}`}
-          </button>
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                }}>
+                  <div style={{ fontFamily: "'Bebas Neue'", fontSize: 32, color: '#ccc' }}>×</div>
+                </div>
+
+                <GoalPicker label={jogo.time_fora} value={goalsFora} onChange={setGoalsFora} />
+              </div>
+            </div>
+
+            {/* Preview do palpite */}
+            <div style={{
+              background: '#f0f9f4', borderRadius: 12, padding: '14px 18px',
+              marginBottom: 10, border: '1px solid #c6edd9',
+              display: 'flex', justifyContent: 'space-between', fontSize: 14,
+            }}>
+              <span style={{ color: '#555' }}>Seu palpite</span>
+              <strong style={{ color: '#00C16A', fontSize: 16, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>
+                {jogo.time_casa} {goalsCasa} × {goalsFora} {jogo.time_fora}
+              </strong>
+            </div>
+
+            <div style={{
+              background: '#f8fafb', borderRadius: 12, padding: '14px 18px',
+              marginBottom: '1.5rem', border: '1px solid #eee',
+              display: 'flex', justifyContent: 'space-between', fontSize: 14,
+            }}>
+              <span style={{ color: '#555' }}>Valor a pagar</span>
+              <strong style={{ color: '#00C16A', fontSize: 17, fontWeight: 800 }}>
+                R$ {jogo.valor_palpite?.toFixed(2)}
+              </strong>
+            </div>
+
+            {error && (
+              <div style={{
+                background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10,
+                padding: '12px 16px', color: '#dc2626', fontSize: 14,
+                marginBottom: '1rem',
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            <button
+              onClick={apostar}
+              disabled={submitting}
+              style={{
+                width: '100%',
+                background: submitting ? '#aaa' : '#00C16A',
+                color: 'white', border: 'none', borderRadius: 14,
+                padding: '16px', fontSize: 16, fontWeight: 800,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                boxShadow: submitting ? 'none' : '0 4px 20px rgba(0,193,106,0.35)',
+                transition: 'all 0.2s',
+                letterSpacing: 0.3,
+              }}
+            >
+              {submitting ? '⏳ Gerando PIX...' : `✅ Confirmar e Pagar R$ ${jogo.valor_palpite?.toFixed(2)} via PIX`}
+            </button>
+
+            <p style={{ textAlign: 'center', fontSize: 12, color: '#aaa', marginTop: 12 }}>
+              🔒 Pagamento 100% seguro via PIX
+            </p>
+          </div>
         </div>
       </div>
+
       {pagamento && (
         <PixModal
           pagamento={pagamento}

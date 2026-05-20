@@ -6,45 +6,69 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path ? 'nav-active' : '';
+  const isActive = (path) => location.pathname === path;
+
+  const linkStyle = (path) => ({
+    textDecoration: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    color: isActive(path) ? '#00C16A' : '#555',
+    borderBottom: isActive(path) ? '2px solid #00C16A' : '2px solid transparent',
+    paddingBottom: 2,
+    transition: 'color 0.2s',
+  });
 
   return (
-    <nav style={{background:'white',borderBottom:'1px solid var(--border)',position:'sticky',top:0,zIndex:100}}>
-      <div className="container" style={{display:'flex',alignItems:'center',justifyContent:'space-between',height:60}}>
-        <Link to="/" style={{textDecoration:'none'}}>
-          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:'var(--text)'}}>
-            Prêmio<span style={{color:'var(--green)'}}>PIX</span>
+    <nav style={{
+      background: 'white',
+      borderBottom: '1px solid #eee',
+      position: 'sticky', top: 0, zIndex: 100,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+    }}>
+      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+        {/* Logo */}
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 28 }}>⚽</span>
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, letterSpacing: 1, color: '#111' }}>
+            Prêmio<span style={{ color: '#00C16A' }}>PIX</span>
           </span>
         </Link>
 
-        <div style={{display:'flex',alignItems:'center',gap:'1.5rem'}}>
-          <Link to="/placar-premiado" className={`nav-link ${isActive('/placar-premiado')}`} style={{textDecoration:'none',fontSize:14,color:'var(--muted)',fontWeight:500}}>
-            🎯 Placar Premiado
-          </Link>
-          <Link to="/mestre" className={`nav-link ${isActive('/mestre')}`} style={{textDecoration:'none',fontSize:14,color:'var(--muted)',fontWeight:500}}>
-            ✨ Mestre do Placar
-          </Link>
-          <Link to="/ganhadores" style={{textDecoration:'none',fontSize:14,color:'var(--muted)'}}>Ganhadores</Link>
-          {user && (
-            <Link to="/meus-jogos" style={{textDecoration:'none',fontSize:14,color:'var(--muted)'}}>Meus Jogos</Link>
-          )}
-          {user?.is_admin && (
-            <Link to="/admin" style={{textDecoration:'none',fontSize:14,color:'var(--purple)'}}>⚙ Admin</Link>
-          )}
+        {/* Links centrais */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <Link to="/placar-premiado" style={linkStyle('/placar-premiado')}>🎯 Placar Premiado</Link>
+          <Link to="/ganhadores" style={linkStyle('/ganhadores')}>🏆 Ganhadores</Link>
+          {user && <Link to="/meus-jogos" style={linkStyle('/meus-jogos')}>📋 Meus Jogos</Link>}
+          {user?.is_admin && <Link to="/admin" style={{ ...linkStyle('/admin'), color: '#7c3aed' }}>⚙ Admin</Link>}
         </div>
 
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        {/* Auth buttons */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {user ? (
             <>
-              <span style={{fontSize:14,color:'var(--muted)'}}>Olá, {user.nome.split(' ')[0]}</span>
-              <button className="btn btn-outline" onClick={() => { logout(); navigate('/'); }}>Sair</button>
+              <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>
+                Olá, {user.nome.split(' ')[0]} 👋
+              </span>
+              <button
+                className="btn btn-outline"
+                style={{ fontSize: 13, padding: '6px 14px' }}
+                onClick={() => { logout(); navigate('/'); }}
+              >
+                Sair
+              </button>
             </>
           ) : (
             <>
-              <Link to="/login"><button className="btn btn-outline">Entrar</button></Link>
-              <Link to="/register"><button className="btn btn-primary">Cadastrar</button></Link>
+              <Link to="/login">
+                <button className="btn btn-outline" style={{ fontSize: 13, padding: '6px 14px' }}>Entrar</button>
+              </Link>
+              <Link to="/register">
+                <button className="btn btn-primary" style={{ fontSize: 13, padding: '6px 14px', background: '#00C16A', border: 'none' }}>
+                  Cadastrar
+                </button>
+              </Link>
             </>
           )}
         </div>
