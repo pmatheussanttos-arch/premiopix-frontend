@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onrender.com') + '/api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {

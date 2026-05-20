@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
-
-function getAuthHeaders() {
-  const token = localStorage.getItem('token');
-  return { headers: { Authorization: `Bearer ${token}` } };
-}
+const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onrender.com') + '/api';
 
 export default function Admin() {
   const [tab, setTab] = useState('dashboard');
@@ -22,13 +17,15 @@ export default function Admin() {
     setLoading(true);
     try {
       const [s, j, u] = await Promise.all([
-        axios.get(`${API}/admin/dashboard`, getAuthHeaders()),
-        axios.get(`${API}/admin/jogos`, getAuthHeaders()),
-        axios.get(`${API}/admin/usuarios`, getAuthHeaders()),
+        axios.get(`${API}/admin/dashboard`),
+        axios.get(`${API}/admin/jogos`),
+        axios.get(`${API}/admin/usuarios`),
       ]);
       setStats(s.data); setJogos(j.data); setUsuarios(u.data);
     } catch(e) {
-      setMsg('❌ ' + (e.response?.data?.detail || 'Erro ao carregar'));
+      const status = e.response?.status;
+      const detail = e.response?.data?.detail || 'Erro ao carregar';
+      setMsg(`❌ [${status || 'rede'}] ${detail}`);
     }
     setLoading(false);
   };
@@ -40,7 +37,7 @@ export default function Admin() {
       await axios.post(`${API}/admin/jogos`, {
         ...novoJogo,
         data_hora: new Date(novoJogo.data_hora).toISOString()
-      }, getAuthHeaders());
+      });
       setMsg('✅ Jogo criado!');
       setNovoJogo({ time_casa:'',time_fora:'',campeonato:'',data_hora:'',valor_palpite:5,premio_fixo:100 });
       load();
@@ -51,7 +48,7 @@ export default function Admin() {
     try {
       await axios.post(`${API}/admin/jogos/${resultado.jogo_id}/resultado`, {
         gols_casa: resultado.gols_casa, gols_fora: resultado.gols_fora
-      }, getAuthHeaders());
+      });
       setMsg('✅ Resultado lançado!');
       load();
     } catch(e) { setMsg('❌ ' + (e.response?.data?.detail || 'Erro')); }

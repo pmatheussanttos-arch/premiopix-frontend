@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onrender.com') + '/api';
 
 export default function Home() {
   const [placarGames, setPlacarGames] = useState([]);

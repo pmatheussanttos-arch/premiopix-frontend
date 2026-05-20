@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PixModal from '../components/PixModal';
 
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onrender.com') + '/api';
 
 export default function MestreComprar() {
   const { id } = useParams();
