@@ -14,7 +14,7 @@ export default function Admin() {
   const [resultado, setResultado] = useState({ jogo_id:'', gols_casa:0, gols_fora:0 });
   const [msg, setMsg] = useState('');
 
-  const load = async () => {
+  const load = async () => { const token = localStorage.getItem('token'); axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setLoading(true);
     try {
       const [s, j, d, u] = await Promise.all([
