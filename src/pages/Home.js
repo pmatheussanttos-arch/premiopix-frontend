@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -6,9 +6,10 @@ const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onr
 
 const css = `
 @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 @keyframes fadeInUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-@keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes shimmer  { 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes spin     { to{transform:rotate(360deg)} }
 `;
 
 function Countdown({ targetDate }) {
@@ -36,70 +37,105 @@ function Countdown({ targetDate }) {
 }
 
 export default function Home() {
-  const [jogos, setJogos] = useState([]);      // Placar Premiado (jogos individuais)
-  const [rodadas, setRodadas] = useState([]);  // Mestre do Placar (rounds de 5 jogos)
+  const [jogos, setJogos] = useState([]);
+  const [rodadas, setRodadas] = useState([]);
   const [ganhadores, setGanhadores] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState('loading'); // 'loading' | 'ok' | 'erro' | 'vazio'
+  const [tentativa, setTentativa] = useState(0);
 
-  useEffect(() => {
+  const carregar = useCallback(() => {
+    setStatus('loading');
     Promise.all([
-      axios.get(`${API}/jogos/publico`).catch(() => ({ data: [] })),
-      axios.get(`${API}/mestre/publico/jogos`).catch(() => ({ data: [] })),
-      axios.get(`${API}/ganhadores/`).catch(() => ({ data: [] })),
-    ]).then(([j, r, g]) => {
-      setJogos(j.data.slice(0, 6));
-      setRodadas(r.data.slice(0, 3));
-      setGanhadores(g.data.slice(0, 4));
-    }).finally(() => setLoading(false));
-  }, []);
+      axios.get(`${API}/jogos/publico`, { timeout: 20000 }),
+      axios.get(`${API}/mestre/publico/jogos`, { timeout: 20000 }),
+      axios.get(`${API}/ganhadores/`, { timeout: 20000 }).catch(() => ({ data: [] })),
+    ])
+      .then(([j, r, g]) => {
+        const j2 = Array.isArray(j.data) ? j.data.slice(0, 6) : [];
+        const r2 = Array.isArray(r.data) ? r.data.slice(0, 3) : [];
+        setJogos(j2);
+        setRodadas(r2);
+        setGanhadores(Array.isArray(g.data) ? g.data.slice(0, 4) : []);
+        setStatus(j2.length > 0 || r2.length > 0 ? 'ok' : 'vazio');
+      })
+      .catch(() => setStatus('erro'));
+  }, [tentativa]);
 
-  if (loading) return <div className="loading-full"><div className="spinner"></div></div>;
+  useEffect(() => { carregar(); }, [carregar]);
 
-  const temJogos = jogos.length > 0;
+  // ── Estado de carregamento ────────────────────────────────────────────────
+  if (status === 'loading') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#0D1B2A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+        <style>{css}</style>
+        <div style={{ width: 48, height: 48, border: '4px solid rgba(255,184,0,0.2)', borderTopColor: '#FFB800', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15 }}>Carregando jogos...</div>
+        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>O servidor pode levar até 30s para acordar</div>
+      </div>
+    );
+  }
+
+  // ── Erro de rede (backend offline / cold start ainda em andamento) ────────
+  if (status === 'erro') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#0D1B2A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '2rem' }}>
+        <style>{css}</style>
+        <div style={{ fontSize: 56 }}>⚙️</div>
+        <h2 style={{ color: 'white', fontFamily: "'Bebas Neue'", fontSize: 36, letterSpacing: 2, margin: 0 }}>Servidor Acordando</h2>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, textAlign: 'center', maxWidth: 320, lineHeight: 1.7, margin: 0 }}>
+          O servidor está iniciando (pode levar até 60 segundos). Clique em tentar novamente.
+        </p>
+        <button
+          onClick={() => setTentativa(t => t + 1)}
+          style={{ background: '#00C16A', color: 'white', border: 'none', borderRadius: 12, padding: '12px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,193,106,0.4)' }}
+        >
+          🔄 Tentar Novamente
+        </button>
+      </div>
+    );
+  }
+
+  const temJogos   = jogos.length > 0;
   const temRodadas = rodadas.length > 0;
-  const jackpot = rodadas[0]?.valor_premio || 0;
-  const nextGame = jogos[0]?.data_hora || rodadas[0]?.jogos?.[0]?.data_hora;
+  const jackpot    = rodadas[0]?.valor_premio || 0;
+  const nextGame   = jogos[0]?.data_hora || rodadas[0]?.jogos?.[0]?.data_hora;
 
   return (
     <div>
       <style>{css}</style>
 
       {/* ── HERO ── */}
-      <section style={{ background: 'linear-gradient(135deg, #0D1B2A 0%, #1a3050 50%, #0D1B2A 100%)', color: 'white', padding: '5rem 0 4rem', overflow: 'hidden', position: 'relative' }}>
+      <section style={{ background: 'linear-gradient(135deg,#0D1B2A 0%,#1a3050 50%,#0D1B2A 100%)', color: 'white', padding: '5rem 0 4rem', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '8%', left: '4%', fontSize: 90, opacity: 0.05, animation: 'float 4s ease-in-out infinite' }}>⚽</div>
         <div style={{ position: 'absolute', top: '15%', right: '5%', fontSize: 70, opacity: 0.06, animation: 'float 5s ease-in-out infinite 1s' }}>🏆</div>
         <div style={{ position: 'absolute', bottom: '10%', left: '8%', fontSize: 55, opacity: 0.05, animation: 'float 6s ease-in-out infinite 0.5s' }}>💰</div>
         <div style={{ position: 'absolute', bottom: '12%', right: '7%', fontSize: 65, opacity: 0.05, animation: 'float 4.5s ease-in-out infinite 2s' }}>🎯</div>
 
         <div className="container" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-block', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.3)', borderRadius: 20, padding: '6px 18px', fontSize: 13, color: '#FFB800', fontWeight: 700, marginBottom: '1.5rem', letterSpacing: 0.5, animation: 'fadeInUp 0.6s ease' }}>
+          <div style={{ display: 'inline-block', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.3)', borderRadius: 20, padding: '6px 18px', fontSize: 13, color: '#FFB800', fontWeight: 700, marginBottom: '1.5rem', animation: 'fadeInUp 0.6s ease' }}>
             👑 Concurso de habilidade esportiva
           </div>
-
-          <h1 style={{ fontSize: 'clamp(42px,9vw,82px)', lineHeight: 1.0, marginBottom: '0.75rem', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, animation: 'fadeInUp 0.7s ease' }}>
+          <h1 style={{ fontSize: 'clamp(42px,9vw,82px)', lineHeight: 1.0, marginBottom: '0.75rem', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 3, animation: 'fadeInUp 0.7s ease' }}>
             Mestre do<br />
-            <span style={{ background: 'linear-gradient(90deg, #FFB800, #ff8f00, #FFB800)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shimmer 3s linear infinite' }}>Placar</span>
+            <span style={{ background: 'linear-gradient(90deg,#FFB800,#ff8f00,#FFB800)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shimmer 3s linear infinite' }}>Placar</span>
           </h1>
-
           <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.6)', maxWidth: 520, margin: '0 auto 2rem', lineHeight: 1.65, animation: 'fadeInUp 0.8s ease' }}>
-            Acerte o placar, pague via PIX e <strong style={{ color: 'white' }}>ganhe via PIX</strong>.<br />
-            Simples, rápido e seguro!
+            Acerte o placar, pague via PIX e <strong style={{ color: 'white' }}>ganhe via PIX</strong>.<br />Simples, rápido e seguro!
           </p>
 
-          {/* Jackpot / próximo jogo */}
           {(jackpot > 0 || nextGame) && (
             <div style={{ display: 'inline-block', background: 'rgba(255,184,0,0.08)', border: '1px solid rgba(255,184,0,0.2)', borderRadius: 20, padding: '1.2rem 2.5rem', marginBottom: '2rem', animation: 'fadeInUp 0.85s ease' }}>
               {jackpot > 0 && (
                 <>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>🏆 Jackpot disponível</div>
-                  <div style={{ fontFamily: "'Bebas Neue'", fontSize: 52, letterSpacing: 2, background: 'linear-gradient(90deg, #FFB800, #ff8f00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'pulse 2s ease-in-out infinite' }}>
+                  <div style={{ fontFamily: "'Bebas Neue'", fontSize: 52, letterSpacing: 2, background: 'linear-gradient(90deg,#FFB800,#ff8f00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'pulse 2s ease-in-out infinite' }}>
                     R$ {jackpot.toLocaleString('pt-BR')}
                   </div>
                 </>
               )}
               {nextGame && (
                 <>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 6, letterSpacing: 1, textTransform: 'uppercase', marginTop: jackpot > 0 ? 8 : 0 }}>Começa em</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1, marginTop: jackpot > 0 ? 8 : 0 }}>Começa em</div>
                   <Countdown targetDate={nextGame} />
                 </>
               )}
@@ -109,19 +145,17 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', animation: 'fadeInUp 0.95s ease' }}>
             {temJogos ? (
               <Link to="/placar-premiado">
-                <button style={{ background: 'linear-gradient(135deg, #00C16A, #00a857)', color: 'white', border: 'none', borderRadius: 14, padding: '15px 36px', fontSize: 17, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,193,106,0.45)', animation: 'pulse 2.5s ease-in-out infinite', letterSpacing: 0.3 }}>
+                <button style={{ background: 'linear-gradient(135deg,#00C16A,#00a857)', color: 'white', border: 'none', borderRadius: 14, padding: '15px 36px', fontSize: 17, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,193,106,0.45)', animation: 'pulse 2.5s ease-in-out infinite', letterSpacing: 0.3 }}>
                   ⚽ Apostar Agora
                 </button>
               </Link>
             ) : temRodadas ? (
               <Link to="/mestre">
-                <button style={{ background: 'linear-gradient(135deg, #00C16A, #00a857)', color: 'white', border: 'none', borderRadius: 14, padding: '15px 36px', fontSize: 17, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,193,106,0.45)', animation: 'pulse 2.5s ease-in-out infinite', letterSpacing: 0.3 }}>
-                  ⚽ Ver Rodadas
+                <button style={{ background: 'linear-gradient(135deg,#00C16A,#00a857)', color: 'white', border: 'none', borderRadius: 14, padding: '15px 36px', fontSize: 17, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 24px rgba(0,193,106,0.45)', animation: 'pulse 2.5s ease-in-out infinite', letterSpacing: 0.3 }}>
+                  🏆 Ver Rodadas
                 </button>
               </Link>
-            ) : (
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15 }}>⏳ Aguardando novos jogos...</div>
-            )}
+            ) : null}
             <Link to="/ganhadores">
               <button style={{ background: 'transparent', color: 'rgba(255,255,255,0.8)', border: '2px solid rgba(255,255,255,0.2)', borderRadius: 14, padding: '15px 36px', fontSize: 17, fontWeight: 600, cursor: 'pointer' }}>
                 🏆 Ganhadores
@@ -144,7 +178,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── JOGOS INDIVIDUAIS (Placar Premiado) ── */}
+      {/* ── JOGOS INDIVIDUAIS ── */}
       {temJogos && (
         <section style={{ padding: '4rem 0', background: '#f8fafb' }}>
           <div className="container">
@@ -153,11 +187,8 @@ export default function Home() {
                 <p style={{ color: '#00C16A', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 }}>Apostas abertas agora</p>
                 <h2 style={{ fontSize: 38, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>⚽ Jogos Disponíveis</h2>
               </div>
-              <Link to="/placar-premiado">
-                <button style={{ background: 'transparent', border: '1px solid #ddd', color: '#555', borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Ver todos →</button>
-              </Link>
+              <Link to="/placar-premiado"><button style={{ background: 'transparent', border: '1px solid #ddd', color: '#555', borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Ver todos →</button></Link>
             </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 18 }}>
               {jogos.map(j => <JogoCard key={j.id} jogo={j} />)}
             </div>
@@ -174,9 +205,7 @@ export default function Home() {
                 <p style={{ color: '#FFB800', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 }}>Acerte os 5 placares</p>
                 <h2 style={{ fontSize: 38, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>🏆 Rodadas com Jackpot</h2>
               </div>
-              <Link to="/mestre">
-                <button style={{ background: 'transparent', border: '1px solid #ddd', color: '#555', borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Ver todas →</button>
-              </Link>
+              <Link to="/mestre"><button style={{ background: 'transparent', border: '1px solid #ddd', color: '#555', borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Ver todas →</button></Link>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 18 }}>
               {rodadas.map(d => <RodadaCard key={d.id} desafio={d} />)}
@@ -185,8 +214,8 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── NENHUM JOGO ── */}
-      {!temJogos && !temRodadas && (
+      {/* ── VAZIO ── */}
+      {status === 'vazio' && (
         <section style={{ padding: '4rem 0', background: '#f8fafb' }}>
           <div className="container">
             <div style={{ background: 'white', borderRadius: 20, padding: '4rem 2rem', textAlign: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
@@ -220,7 +249,7 @@ export default function Home() {
           </div>
           <div style={{ textAlign: 'center', marginTop: '3rem' }}>
             <Link to={temJogos ? '/placar-premiado' : '/mestre'}>
-              <button style={{ background: 'linear-gradient(135deg, #00C16A, #00a857)', color: 'white', border: 'none', borderRadius: 14, padding: '14px 40px', fontSize: 16, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,193,106,0.35)' }}>
+              <button style={{ background: 'linear-gradient(135deg,#00C16A,#00a857)', color: 'white', border: 'none', borderRadius: 14, padding: '14px 40px', fontSize: 16, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,193,106,0.35)' }}>
                 ⚽ Quero Apostar Agora!
               </button>
             </Link>
@@ -236,9 +265,9 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12 }}>
             {[
               { icon: '🥉', name: 'Bronze', range: '0–10 acertos', color: '#cd7f32' },
-              { icon: '🥈', name: 'Prata', range: '11–30 acertos', color: '#aaa' },
-              { icon: '🥇', name: 'Ouro', range: '31–100 acertos', color: '#FFB800' },
-              { icon: '👑', name: 'Lenda', range: '101+ acertos', color: '#00C16A' },
+              { icon: '🥈', name: 'Prata',  range: '11–30 acertos', color: '#aaa' },
+              { icon: '🥇', name: 'Ouro',   range: '31–100 acertos', color: '#FFB800' },
+              { icon: '👑', name: 'Lenda',  range: '101+ acertos', color: '#00C16A' },
             ].map(l => (
               <div key={l.name} style={{ background: `${l.color}10`, border: `1px solid ${l.color}22`, borderRadius: 14, padding: '1.25rem 1rem', textAlign: 'center' }}>
                 <div style={{ fontSize: 32, marginBottom: 6 }}>{l.icon}</div>
@@ -295,7 +324,7 @@ export default function Home() {
             </div>
             <div>
               <h5 style={{ marginBottom: '1rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>Links</h5>
-              {[['⚽ Jogos', '/placar-premiado'],['🏆 Rodadas', '/mestre'],['📊 Ranking', '/ranking'],['👤 Perfil', '/perfil']].map(([label, to]) => (
+              {[['⚽ Jogos','/placar-premiado'],['🏆 Rodadas','/mestre'],['📊 Ranking','/ranking'],['👤 Perfil','/perfil']].map(([label,to]) => (
                 <div key={to}><Link to={to} style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 8 }}>{label}</Link></div>
               ))}
             </div>
@@ -318,17 +347,12 @@ export default function Home() {
   );
 }
 
-// ── Componentes de card ───────────────────────────────────────────────────────
-
 function JogoCard({ jogo: j }) {
   const [hovered, setHovered] = useState(false);
   const dataStr = new Date(j.data_hora).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-
   return (
-    <div
-      style={{ background: 'white', borderRadius: 18, overflow: 'hidden', boxShadow: hovered ? '0 12px 40px rgba(0,0,0,0.13)' : '0 2px 16px rgba(0,0,0,0.07)', transform: hovered ? 'translateY(-5px)' : 'none', transition: 'all 0.25s ease', cursor: 'pointer' }}
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-    >
+    <div style={{ background: 'white', borderRadius: 18, overflow: 'hidden', boxShadow: hovered ? '0 12px 40px rgba(0,0,0,0.13)' : '0 2px 16px rgba(0,0,0,0.07)', transform: hovered ? 'translateY(-5px)' : 'none', transition: 'all 0.25s ease', cursor: 'pointer' }}
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <div style={{ background: 'linear-gradient(135deg,#00C16A,#00a857)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{j.campeonato}</span>
         <span style={{ background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: 20, fontSize: 10, padding: '2px 8px', fontWeight: 600 }}>● ABERTO</span>
@@ -347,18 +371,15 @@ function JogoCard({ jogo: j }) {
             <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{j.time_fora}</div>
           </div>
         </div>
-
         <div style={{ background: 'linear-gradient(135deg,#fffbeb,#fff8d6)', borderRadius: 10, padding: '10px', textAlign: 'center', marginBottom: 10, border: '1px solid #ffe082' }}>
           <div style={{ fontSize: 10, color: '#92400e', marginBottom: 1, fontWeight: 600 }}>💰 PRÊMIO</div>
           <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#FFB800', letterSpacing: 1 }}>R$ {j.premio_fixo?.toLocaleString('pt-BR')}</div>
           <div style={{ fontSize: 10, color: '#92400e' }}>dividido entre quem acertar</div>
         </div>
-
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginBottom: 12 }}>
           <span>📅 {dataStr}</span>
           <span>👥 {j.total_apostas || 0} apostas</span>
         </div>
-
         <Link to={`/placar/${j.id}`}>
           <button style={{ width: '100%', background: hovered ? '#00a857' : '#00C16A', color: 'white', border: 'none', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', letterSpacing: 0.3 }}>
             🎯 Apostar — R$ {j.valor_palpite?.toFixed(2)}
@@ -372,10 +393,8 @@ function JogoCard({ jogo: j }) {
 function RodadaCard({ desafio: d }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div
-      style={{ background: 'white', borderRadius: 18, overflow: 'hidden', boxShadow: hovered ? '0 12px 40px rgba(0,0,0,0.13)' : '0 2px 16px rgba(0,0,0,0.07)', transform: hovered ? 'translateY(-5px)' : 'none', transition: 'all 0.25s ease', cursor: 'pointer', borderTop: '3px solid #FFB800' }}
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-    >
+    <div style={{ background: 'white', borderRadius: 18, overflow: 'hidden', boxShadow: hovered ? '0 12px 40px rgba(0,0,0,0.13)' : '0 2px 16px rgba(0,0,0,0.07)', transform: hovered ? 'translateY(-5px)' : 'none', transition: 'all 0.25s ease', cursor: 'pointer', borderTop: '3px solid #FFB800' }}
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <div style={{ padding: '1.1rem' }}>
         <div style={{ fontSize: 11, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{d.campeonato}</div>
         <div style={{ fontWeight: 700, fontSize: 16, color: '#111', marginBottom: 10 }}>{d.titulo}</div>
