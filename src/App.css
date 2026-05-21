@@ -67,3 +67,52 @@ h1, h2, h3, .display { font-family: 'Bebas Neue', sans-serif; }
 .pix-qr-box img { width: 180px; height: 180px; }
 .pix-copy { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12px; word-break: break-all; cursor: pointer; margin-bottom: 1rem; }
 .pix-copy:hover { border-color: var(--green); }
+
+/* ── MOBILE RESPONSIVE ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .container { padding: 0 1rem; }
+
+  /* Navbar mobile menu */
+  .nav-links-desktop { display: none !important; }
+  .nav-auth-desktop  { display: none !important; }
+  .nav-hamburger     { display: flex !important; }
+  .nav-mobile-menu   { display: flex !important; }
+
+  /* Grid helpers */
+  .grid-mobile-1 { grid-template-columns: 1fr !important; }
+  .flex-mobile-col { flex-direction: column !important; }
+
+  /* Admin 2-col forms → 1 col */
+  .admin-form-grid { grid-template-columns: 1fr !important; }
+
+  /* MestreComprar layout → stack */
+  .mestre-comprar-grid { grid-template-columns: 1fr !important; }
+  .mestre-resumo-sticky { position: static !important; min-width: unset !important; }
+
+  /* Ranking podium */
+  .ranking-podium { gap: 8px !important; }
+  .ranking-podium-item-1 { flex: 0 0 140px !important; }
+  .ranking-podium-item-23 { flex: 0 0 100px !important; }
+  .ranking-list-row { flex-wrap: nowrap !important; gap: 8px !important; }
+  .ranking-ganho-col { display: none !important; }
+
+  /* Stats bar */
+  .stats-bar-item { padding: 0.75rem 1rem !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.15) !important; }
+
+  /* Hero buttons */
+  .hero-buttons { gap: 10px !important; }
+  .hero-btn { padding: 13px 24px !important; font-size: 15px !important; }
+
+  /* Section headers */
+  .section-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+}
+
+@media (max-width: 480px) {
+  .ranking-podium { display: none !important; }
+}
+
+/* Navbar desktop — hide hamburger */
+@media (min-width: 769px) {
+  .nav-hamburger   { display: none !important; }
+  .nav-mobile-menu { display: none !important; }
+}

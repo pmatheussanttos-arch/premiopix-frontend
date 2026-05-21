@@ -5,50 +5,35 @@ import PixModal from '../components/PixModal';
 
 const API = (process.env.REACT_APP_BACKEND_URL || 'https://premiopix-backend.onrender.com') + '/api';
 
+const css = `
+.picker-btn-sub { width: 52px; height: 52px; border-radius: 14px; border: 2px solid #e0e0e0; background: white; font-size: 26px; cursor: pointer; font-weight: 700; color: #555; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.15s; }
+.picker-btn-add { width: 52px; height: 52px; border-radius: 14px; border: 2px solid #e0e0e0; background: #00C16A; font-size: 26px; cursor: pointer; font-weight: 700; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,193,106,0.3); }
+.picker-score   { width: 72px; height: 72px; background: linear-gradient(135deg, #071a2e, #0d2d4a); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue'; font-size: 48px; color: white; letter-spacing: 1; box-shadow: 0 4px 16px rgba(7,26,46,0.25); flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .picker-btn-sub { width: 56px; height: 56px; }
+  .picker-btn-add { width: 56px; height: 56px; }
+  .picker-score   { width: 68px; height: 68px; font-size: 42px; }
+}
+`;
+
 function GoalPicker({ label, value, onChange }) {
   return (
     <div style={{ textAlign: 'center' }}>
       <div style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {label}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
         <button
+          className="picker-btn-sub"
           onClick={() => onChange(Math.max(0, value - 1))}
-          style={{
-            width: 44, height: 44, borderRadius: 12,
-            border: '2px solid #e0e0e0', background: 'white',
-            fontSize: 22, cursor: 'pointer', fontWeight: 700, color: '#555',
-            transition: 'all 0.15s',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = '#00C16A'}
-          onMouseLeave={e => e.currentTarget.style.borderColor = '#e0e0e0'}
         >
           −
         </button>
-        <div style={{
-          width: 64, height: 64,
-          background: 'linear-gradient(135deg, #071a2e, #0d2d4a)',
-          borderRadius: 16,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Bebas Neue'", fontSize: 42, color: 'white',
-          letterSpacing: 1,
-          boxShadow: '0 4px 16px rgba(7,26,46,0.25)',
-        }}>
-          {value}
-        </div>
+        <div className="picker-score">{value}</div>
         <button
+          className="picker-btn-add"
           onClick={() => onChange(value + 1)}
-          style={{
-            width: 44, height: 44, borderRadius: 12,
-            border: '2px solid #e0e0e0', background: '#00C16A',
-            fontSize: 22, cursor: 'pointer', fontWeight: 700, color: 'white',
-            transition: 'all 0.15s',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,193,106,0.3)',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#00a857'}
-          onMouseLeave={e => e.currentTarget.style.background = '#00C16A'}
         >
           +
         </button>
@@ -93,117 +78,71 @@ export default function PlacarDetalhe() {
   if (!jogo) return null;
 
   const dataStr = new Date(jogo.data_hora).toLocaleString('pt-BR', {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 
   return (
-    <div style={{ background: '#f8fafb', minHeight: '100vh', padding: '2rem 0 4rem' }}>
+    <div style={{ background: '#f8fafb', minHeight: '100vh', padding: '1.5rem 0 4rem' }}>
+      <style>{css}</style>
       <div className="container" style={{ maxWidth: 520 }}>
         <button
           onClick={() => navigate(-1)}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: '#666', fontSize: 14, marginBottom: '1.5rem',
-            display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500,
-          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize: 14, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500, minHeight: 44, padding: '0 4px' }}
         >
           ← Voltar para jogos
         </button>
 
-        {/* Card principal */}
-        <div style={{
-          background: 'white', borderRadius: 24,
-          boxShadow: '0 4px 30px rgba(0,0,0,0.10)',
-          overflow: 'hidden',
-        }}>
-          {/* Header do card */}
-          <div style={{
-            background: 'linear-gradient(135deg, #071a2e, #0d2d4a)',
-            padding: '1.5rem',
-            textAlign: 'center',
-            color: 'white',
-          }}>
-            <div style={{
-              display: 'inline-block', background: 'rgba(0,193,106,0.2)',
-              border: '1px solid rgba(0,193,106,0.5)',
-              borderRadius: 20, padding: '4px 14px', fontSize: 12,
-              color: '#00C16A', fontWeight: 700, marginBottom: 12, letterSpacing: 0.5,
-            }}>
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.10)', overflow: 'hidden' }}>
+          {/* Header */}
+          <div style={{ background: 'linear-gradient(135deg, #071a2e, #0d2d4a)', padding: '1.5rem 1.25rem', textAlign: 'center', color: 'white' }}>
+            <div style={{ display: 'inline-block', background: 'rgba(0,193,106,0.2)', border: '1px solid rgba(0,193,106,0.5)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#00C16A', fontWeight: 700, marginBottom: 12, letterSpacing: 0.5 }}>
               ⚽ {jogo.campeonato}
             </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, color: 'white' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6, color: 'white', lineHeight: 1.2 }}>
               {jogo.time_casa} <span style={{ color: '#FFB800' }}>×</span> {jogo.time_fora}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>📅 {dataStr}</p>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>📅 {dataStr}</p>
           </div>
 
-          <div style={{ padding: '1.75rem' }}>
+          <div style={{ padding: '1.5rem 1.25rem' }}>
             {/* Prêmio */}
-            <div style={{
-              background: 'linear-gradient(135deg, #fffbeb, #fff8d6)',
-              borderRadius: 14, padding: '1.2rem', textAlign: 'center',
-              marginBottom: '1.75rem', border: '1px solid #ffe082',
-            }}>
+            <div style={{ background: 'linear-gradient(135deg, #fffbeb, #fff8d6)', borderRadius: 14, padding: '1.1rem', textAlign: 'center', marginBottom: '1.5rem', border: '1px solid #ffe082' }}>
               <div style={{ fontSize: 12, color: '#92400e', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 💰 Prêmio do Jogo
               </div>
-              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 44, color: '#FFB800', letterSpacing: 2, lineHeight: 1 }}>
+              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 40, color: '#FFB800', letterSpacing: 2, lineHeight: 1 }}>
                 R$ {jogo.premio_fixo?.toLocaleString('pt-BR')}
               </div>
-              <div style={{ fontSize: 12, color: '#92400e', marginTop: 4 }}>
-                Dividido igualmente entre todos que acertarem
-              </div>
+              <div style={{ fontSize: 12, color: '#92400e', marginTop: 4 }}>Dividido entre todos que acertarem</div>
             </div>
 
             {/* Seletor de placar */}
-            <div style={{ marginBottom: '1.75rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <p style={{ fontWeight: 700, textAlign: 'center', marginBottom: '1.25rem', fontSize: 15, color: '#111' }}>
                 🎯 Qual será o placar final?
               </p>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.25rem' }}>
                 <GoalPicker label={jogo.time_casa} value={goalsCasa} onChange={setGoalsCasa} />
-
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                }}>
-                  <div style={{ fontFamily: "'Bebas Neue'", fontSize: 32, color: '#ccc' }}>×</div>
-                </div>
-
+                <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#ccc' }}>×</div>
                 <GoalPicker label={jogo.time_fora} value={goalsFora} onChange={setGoalsFora} />
               </div>
             </div>
 
-            {/* Preview do palpite */}
-            <div style={{
-              background: '#f0f9f4', borderRadius: 12, padding: '14px 18px',
-              marginBottom: 10, border: '1px solid #c6edd9',
-              display: 'flex', justifyContent: 'space-between', fontSize: 14,
-            }}>
+            {/* Preview */}
+            <div style={{ background: '#f0f9f4', borderRadius: 12, padding: '13px 16px', marginBottom: 10, border: '1px solid #c6edd9', display: 'flex', justifyContent: 'space-between', fontSize: 14, alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ color: '#555' }}>Seu palpite</span>
-              <strong style={{ color: '#00C16A', fontSize: 16, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>
+              <strong style={{ color: '#00C16A', fontSize: 15, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>
                 {jogo.time_casa} {goalsCasa} × {goalsFora} {jogo.time_fora}
               </strong>
             </div>
 
-            <div style={{
-              background: '#f8fafb', borderRadius: 12, padding: '14px 18px',
-              marginBottom: '1.5rem', border: '1px solid #eee',
-              display: 'flex', justifyContent: 'space-between', fontSize: 14,
-            }}>
+            <div style={{ background: '#f8fafb', borderRadius: 12, padding: '13px 16px', marginBottom: '1.25rem', border: '1px solid #eee', display: 'flex', justifyContent: 'space-between', fontSize: 14, alignItems: 'center' }}>
               <span style={{ color: '#555' }}>Valor a pagar</span>
-              <strong style={{ color: '#00C16A', fontSize: 17, fontWeight: 800 }}>
-                R$ {jogo.valor_palpite?.toFixed(2)}
-              </strong>
+              <strong style={{ color: '#00C16A', fontSize: 16, fontWeight: 800 }}>R$ {jogo.valor_palpite?.toFixed(2)}</strong>
             </div>
 
             {error && (
-              <div style={{
-                background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10,
-                padding: '12px 16px', color: '#dc2626', fontSize: 14,
-                marginBottom: '1rem',
-              }}>
+              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: '12px 16px', color: '#dc2626', fontSize: 14, marginBottom: '1rem' }}>
                 ⚠️ {error}
               </div>
             )}
@@ -211,16 +150,7 @@ export default function PlacarDetalhe() {
             <button
               onClick={apostar}
               disabled={submitting}
-              style={{
-                width: '100%',
-                background: submitting ? '#aaa' : '#00C16A',
-                color: 'white', border: 'none', borderRadius: 14,
-                padding: '16px', fontSize: 16, fontWeight: 800,
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                boxShadow: submitting ? 'none' : '0 4px 20px rgba(0,193,106,0.35)',
-                transition: 'all 0.2s',
-                letterSpacing: 0.3,
-              }}
+              style={{ width: '100%', background: submitting ? '#aaa' : '#00C16A', color: 'white', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 800, cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: submitting ? 'none' : '0 4px 20px rgba(0,193,106,0.35)', transition: 'all 0.2s', letterSpacing: 0.3, minHeight: 52 }}
             >
               {submitting ? '⏳ Gerando PIX...' : `✅ Confirmar e Pagar R$ ${jogo.valor_palpite?.toFixed(2)} via PIX`}
             </button>
