@@ -74,17 +74,25 @@ export default function Admin() {
   const buscarJogosApi = async () => {
     setImportStep('loading'); setImportMsg(''); setJogosApi([]); setSelecionados({});
     try {
-      const r = await axios.get(`${API}/admin/jogos/importar?dias=7`);
-      const lista = (r.data.jogos || []).filter(j => !j.erro);
-      const erros = (r.data.jogos || []).filter(j => j.erro);
+      const r = await axios.get(
+        'https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4351'
+      );
+      const events = r.data.events || [];
+      const lista = events.map(ev => ({
+        fixture_api_id: ev.idEvent,
+        time_casa: ev.strHomeTeam,
+        time_fora: ev.strAwayTeam,
+        campeonato: ev.strLeague,
+        data_hora: ev.strTimestamp,
+      }));
       setJogosApi(lista);
       const sel = {};
       lista.forEach((_, i) => { sel[i] = true; });
       setSelecionados(sel);
-      if (erros.length > 0) setImportMsg(`⚠️ ${erros.length} liga(s) com erro: ${erros.map(e => e.erro).join(' | ')}`);
+      if (lista.length === 0) setImportMsg('⚠️ Nenhum jogo encontrado no Brasileirão');
       setImportStep('lista');
     } catch(e) {
-      setImportMsg(`❌ ${e.response?.data?.detail || 'Erro ao buscar jogos'}`);
+      setImportMsg(`❌ ${e.response?.data?.message || 'Erro ao buscar jogos do TheSportsDB'}`);
       setImportStep(null);
     }
   };
@@ -179,7 +187,7 @@ export default function Admin() {
                 <div>
                   <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 2 }}>🔄 Importar Jogos Automático</h3>
                   {!importStep && (
-                    <p style={{ fontSize: 13, color: '#888', margin: 0 }}>Busca jogos das próximas 7 dias: Brasileirão, Copa do Brasil, Champions</p>
+                    <p style={{ fontSize: 13, color: '#888', margin: 0 }}>Busca próximos jogos do Brasileirão Série A via TheSportsDB</p>
                   )}
                 </div>
                 {!importStep && (
@@ -192,7 +200,7 @@ export default function Admin() {
               {importStep === 'loading' && (
                 <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
                   <div className="spinner" style={{ margin: '0 auto 12px' }}></div>
-                  Buscando jogos na API-Football...
+                  Buscando jogos do Brasileirão...
                 </div>
               )}
 
