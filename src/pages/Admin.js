@@ -25,6 +25,7 @@ export default function Admin() {
   const [novoJogo, setNovoJogo] = useState({ time_casa:'',time_fora:'',campeonato:'',data_hora:'',valor_palpite:5,premio_fixo:100 });
   const [resultado, setResultado] = useState({ jogo_id:'', gols_casa:0, gols_fora:0 });
   const [msg, setMsg] = useState('');
+  const [jogoEditando, setJogoEditando] = useState(null);
 
   // ── Import state ──────────────────────────────────────────────────────────
   const [importStep, setImportStep] = useState(null);
@@ -74,6 +75,25 @@ export default function Admin() {
       setMsg('✅ Resultado lançado!');
       load();
     } catch(e) { setMsg('❌ ' + (e.response?.data?.detail || 'Erro')); }
+  };
+
+  const salvarEdicao = async () => {
+    if (!jogoEditando) return;
+    try {
+      await axios.put(`${API}/admin/jogos/${jogoEditando.id}`, {
+        time_casa: jogoEditando.time_casa,
+        time_fora: jogoEditando.time_fora,
+        campeonato: jogoEditando.campeonato,
+        data_hora: new Date(jogoEditando.data_hora).toISOString(),
+        valor_palpite: jogoEditando.valor_palpite,
+        premio_fixo: jogoEditando.premio_fixo,
+        logo_casa: jogoEditando.logo_casa || null,
+        logo_fora: jogoEditando.logo_fora || null,
+      });
+      setMsg('✅ Jogo atualizado!');
+      setJogoEditando(null);
+      load();
+    } catch(e) { setMsg('❌ ' + (e.response?.data?.detail || 'Erro ao salvar')); }
   };
 
   // ── Import handlers ───────────────────────────────────────────────────────
@@ -159,6 +179,8 @@ export default function Admin() {
           time_casa: j.time_casa, time_fora: j.time_fora,
           campeonato: j.campeonato, data_hora: j.data_hora,
           valor_palpite: importValorPalpite, premio_fixo: importPremio,
+          logo_casa: j.logo_casa || null,
+          logo_fora: j.logo_fora || null,
         })),
       });
       setMsg(`✅ ${r.data.criados} jogo(s) importado(s) com sucesso!`);
@@ -182,8 +204,66 @@ export default function Admin() {
 
   if (loading) return <div className="loading-full"><div className="spinner"></div></div>;
 
+  const EditModal = () => {
+    if (!jogoEditando) return null;
+    const set = (k, v) => setJogoEditando(j => ({ ...j, [k]: v }));
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: '1.5rem', width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>✏️ Editar Jogo #{jogoEditando.id}</h3>
+            <button onClick={() => setJogoEditando(null)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888', lineHeight: 1 }}>×</button>
+          </div>
+          {[['time_casa','Time Casa'],['time_fora','Time Fora'],['campeonato','Campeonato']].map(([k,l]) => (
+            <div style={{ marginBottom: 12 }} key={k}>
+              <label style={labelStyle}>{l}</label>
+              <input value={jogoEditando[k] || ''} onChange={e => set(k, e.target.value)} style={inputStyle} />
+            </div>
+          ))}
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>Data e Hora</label>
+            <input type="datetime-local" value={jogoEditando.data_hora || ''} onChange={e => set('data_hora', e.target.value)} style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div>
+              <label style={labelStyle}>Valor palpite (R$)</label>
+              <input type="number" value={jogoEditando.valor_palpite || 0} onChange={e => set('valor_palpite', parseFloat(e.target.value)||0)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Prêmio (R$)</label>
+              <input type="number" value={jogoEditando.premio_fixo || 0} onChange={e => set('premio_fixo', parseFloat(e.target.value)||0)} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>Logo Time Casa (URL)</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input value={jogoEditando.logo_casa || ''} onChange={e => set('logo_casa', e.target.value)} placeholder="https://..." style={{ ...inputStyle, flex: 1 }} />
+              {jogoEditando.logo_casa && <img src={jogoEditando.logo_casa} alt="" style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }} />}
+            </div>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Logo Time Fora (URL)</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input value={jogoEditando.logo_fora || ''} onChange={e => set('logo_fora', e.target.value)} placeholder="https://..." style={{ ...inputStyle, flex: 1 }} />
+              {jogoEditando.logo_fora && <img src={jogoEditando.logo_fora} alt="" style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }} />}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={salvarEdicao} style={{ flex: 1, background: '#0D1B2A', color: 'white', border: 'none', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer', minHeight: 48 }}>
+              💾 Salvar Alterações
+            </button>
+            <button onClick={() => setJogoEditando(null)} style={{ background: 'transparent', color: '#888', border: '1px solid #e0e0e0', borderRadius: 12, padding: '13px 18px', fontSize: 14, cursor: 'pointer', minHeight: 48 }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ padding: '1.5rem 0 3rem' }}>
+      <EditModal />
       <style>{css}</style>
       <div className="container">
         <h1 style={{ fontSize: 32, marginBottom: '1.25rem', fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>
@@ -292,6 +372,7 @@ export default function Admin() {
                         {jogosApi.map((j, i) => (
                           <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', background: selecionados[i] ? '#f0f9f4' : '#fafafa', border: `1px solid ${selecionados[i] ? '#c6edd9' : '#eee'}`, minHeight: 48 }}>
                             <input type="checkbox" checked={!!selecionados[i]} onChange={e => setSelecionados(s => ({...s, [i]: e.target.checked}))} style={{ width: 18, height: 18, accentColor: '#00C16A', flexShrink: 0 }} />
+                            {j.logo_casa && <img src={j.logo_casa} alt="" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontWeight: 700, fontSize: 14, color: '#111' }}>
                                 {j.time_casa} <span style={{ color: '#ccc' }}>×</span> {j.time_fora}
@@ -300,6 +381,7 @@ export default function Admin() {
                                 {j.campeonato} · {new Date(j.data_hora).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
                               </div>
                             </div>
+                            {j.logo_fora && <img src={j.logo_fora} alt="" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />}
                           </label>
                         ))}
                       </div>
@@ -448,10 +530,19 @@ export default function Admin() {
                   {jogos.map(j => (
                     <div key={j.id} style={{ background: 'white', borderRadius: 12, padding: '12px 14px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #eee', fontSize: 13 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                        <strong style={{ fontSize: 13 }}>{j.time_casa} × {j.time_fora}</strong>
-                        <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: j.status==='aberto' ? '#e6fff3' : '#f5f5f5', color: j.status==='aberto' ? '#00C16A' : '#888', border: `1px solid ${j.status==='aberto' ? '#c6edd9' : '#e0e0e0'}`, whiteSpace: 'nowrap' }}>
-                          {j.status}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                          {j.logo_casa && <img src={j.logo_casa} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />}
+                          <strong style={{ fontSize: 13 }}>{j.time_casa} × {j.time_fora}</strong>
+                          {j.logo_fora && <img src={j.logo_fora} alt="" style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: j.status==='aberto' ? '#e6fff3' : '#f5f5f5', color: j.status==='aberto' ? '#00C16A' : '#888', border: `1px solid ${j.status==='aberto' ? '#c6edd9' : '#e0e0e0'}`, whiteSpace: 'nowrap' }}>
+                            {j.status}
+                          </span>
+                          <button onClick={() => setJogoEditando({ ...j, data_hora: j.data_hora.slice(0,16) })} style={{ background: '#f0f4ff', color: '#4466ee', border: '1px solid #c8d4ff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            ✏️ Editar
+                          </button>
+                        </div>
                       </div>
                       <div style={{ color: '#888', marginTop: 4, fontSize: 12 }}>
                         {j.campeonato} · {j.total_palpites} palpites · R$ {j.premio_fixo}

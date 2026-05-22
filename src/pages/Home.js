@@ -388,14 +388,18 @@ function JogoCard({ jogo: j }) {
       <div style={{ padding: '1.1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
           <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontSize: 26, marginBottom: 2 }}>🏠</div>
+            {j.logo_casa
+              ? <img src={j.logo_casa} alt={j.time_casa} style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 4 }} />
+              : <div style={{ fontSize: 26, marginBottom: 2 }}>🏠</div>}
             <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{j.time_casa}</div>
           </div>
           <div style={{ background: '#f0f9f4', borderRadius: 10, padding: '6px 12px', textAlign: 'center', border: '2px solid #e0f5ea' }}>
             <div style={{ fontFamily: "'Bebas Neue'", fontSize: 18, color: '#00C16A', letterSpacing: 1 }}>VS</div>
           </div>
           <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontSize: 26, marginBottom: 2 }}>✈️</div>
+            {j.logo_fora
+              ? <img src={j.logo_fora} alt={j.time_fora} style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 4 }} />
+              : <div style={{ fontSize: 26, marginBottom: 2 }}>✈️</div>}
             <div style={{ fontSize: 13, fontWeight: 700, color: '#111', lineHeight: 1.2 }}>{j.time_fora}</div>
           </div>
         </div>
