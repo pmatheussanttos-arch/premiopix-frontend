@@ -98,7 +98,7 @@ export default function MestreComprar() {
               <h1 style={{ fontSize: 22, fontWeight: 800, color: 'white', margin: 0 }}>{desafio.titulo}</h1>
             </div>
             <div style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)', borderRadius: 14, padding: '10px 16px', textAlign: 'center', flexShrink: 0 }}>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>🏆 Jackpot</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>🏆 Bolsão Pix</div>
               <div style={{ fontFamily: "'Bebas Neue'", fontSize: 26, color: '#FFB800', letterSpacing: 1, lineHeight: 1 }}>
                 R$ {desafio.valor_premio?.toLocaleString('pt-BR')}
               </div>
@@ -183,7 +183,7 @@ export default function MestreComprar() {
                 })}
 
                 <div style={{ background: 'linear-gradient(135deg, #fffbeb, #fff8d6)', borderRadius: 10, padding: '10px', textAlign: 'center', margin: '1rem 0', border: '1px solid #ffe082' }}>
-                  <div style={{ fontSize: 10, color: '#92400e', marginBottom: 2, fontWeight: 600 }}>🏆 Jackpot</div>
+                  <div style={{ fontSize: 10, color: '#92400e', marginBottom: 2, fontWeight: 600 }}>🏆 Bolsão Pix</div>
                   <div style={{ fontFamily: "'Bebas Neue'", fontSize: 22, color: '#FFB800', letterSpacing: 1 }}>
                     R$ {desafio.valor_premio?.toLocaleString('pt-BR')}
                   </div>

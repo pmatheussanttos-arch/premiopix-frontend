@@ -69,7 +69,7 @@ export default function Mestre() {
             ⚽ Rodadas Abertas
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>
-            Acerte os placares de 5 jogos e concorra ao jackpot — pague via PIX, ganhe via PIX!
+            Acerte os placares de 5 jogos e concorra ao Bolsão Pix — pague via PIX, ganhe via PIX!
           </p>
         </div>
       </div>
@@ -119,7 +119,7 @@ function RodadaCard({ desafio: d }) {
 
       <div style={{ padding: '1.1rem' }}>
         <div style={{ background: 'linear-gradient(135deg, #fffbeb, #fff8d6)', borderRadius: 14, padding: '12px', textAlign: 'center', marginBottom: 12, border: '1px solid #ffe082' }}>
-          <div style={{ fontSize: 10, color: '#92400e', fontWeight: 700, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>🏆 Jackpot da rodada</div>
+          <div style={{ fontSize: 10, color: '#92400e', fontWeight: 700, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>🏆 Bolsão Pix da Rodada</div>
           <div style={{ fontFamily: "'Bebas Neue'", fontSize: 34, color: '#FFB800', letterSpacing: 2, lineHeight: 1 }}>
             R$ {d.valor_premio?.toLocaleString('pt-BR')}
           </div>

@@ -157,7 +157,7 @@ export default function Home() {
             <div className="jackpot-box" style={{ display: 'inline-block', background: 'rgba(255,184,0,0.08)', border: '1px solid rgba(255,184,0,0.2)', borderRadius: 20, marginBottom: '1.75rem', animation: 'fadeInUp 0.85s ease' }}>
               {jackpot > 0 && (
                 <>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>🏆 Jackpot disponível</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>🏆 Bolsão Pix disponível</div>
                   <div className="jackpot-val" style={{ fontFamily: "'Bebas Neue'", letterSpacing: 2, background: 'linear-gradient(90deg,#FFB800,#ff8f00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'pulse 2s ease-in-out infinite' }}>
                     R$ {jackpot.toLocaleString('pt-BR')}
                   </div>
@@ -233,7 +233,7 @@ export default function Home() {
             <div className="section-header">
               <div>
                 <p style={{ color: '#FFB800', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 }}>Acerte os 5 placares</p>
-                <h2 style={{ fontSize: 34, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>🏆 Rodadas com Jackpot</h2>
+                <h2 style={{ fontSize: 34, fontFamily: "'Bebas Neue'", letterSpacing: 1 }}>🏆 Rodadas com Bolsão Pix</h2>
               </div>
               <Link to="/mestre"><button style={{ background: 'transparent', border: '1px solid #ddd', color: '#555', borderRadius: 10, padding: '8px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', minHeight: 36 }}>Ver todas →</button></Link>
             </div>
@@ -425,7 +425,7 @@ function RodadaCard({ desafio: d }) {
         <div style={{ fontSize: 11, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{d.campeonato}</div>
         <div style={{ fontWeight: 700, fontSize: 15, color: '#111', marginBottom: 10 }}>{d.titulo}</div>
         <div style={{ background: 'linear-gradient(135deg,#fffbeb,#fff8d6)', borderRadius: 10, padding: '10px', textAlign: 'center', marginBottom: 10, border: '1px solid #ffe082' }}>
-          <div style={{ fontSize: 10, color: '#92400e', fontWeight: 600, marginBottom: 1 }}>🏆 JACKPOT</div>
+          <div style={{ fontSize: 10, color: '#92400e', fontWeight: 600, marginBottom: 1 }}>🏆 BOLSÃO PIX</div>
           <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#FFB800', letterSpacing: 1 }}>R$ {d.valor_premio?.toLocaleString('pt-BR')}</div>
         </div>
         <div style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>
