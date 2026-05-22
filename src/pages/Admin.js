@@ -36,7 +36,8 @@ export default function Admin() {
 
   // ── Criar Rodada Mestre state ─────────────────────────────────────────────
   const [novaRodada, setNovaRodada] = useState({ titulo: '', campeonato: 'Brasileirão Série A', valor_cartela: 10, valor_premio: 500 });
-  const [jogosSelecionadosRodada, setJogosSelecionadosRodada] = useState({});
+  const [jogosRodada, setJogosRodada] = useState([{ time_casa: '', time_fora: '', data_hora: '' }]);
+  const [criandoRodada, setCriandoRodada] = useState(false);
   const [rodadaMsg, setRodadaMsg] = useState('');
 
   const load = async () => {
@@ -107,20 +108,45 @@ export default function Admin() {
 
   // ── Criar Rodada Mestre ───────────────────────────────────────────────────
   const criarRodadaMestre = async () => {
-    const jogo_ids = Object.entries(jogosSelecionadosRodada).filter(([, v]) => v).map(([k]) => parseInt(k));
     if (!novaRodada.titulo.trim()) { setRodadaMsg('⚠️ Informe o título da rodada'); return; }
-    if (jogo_ids.length < 2) { setRodadaMsg('⚠️ Selecione pelo menos 2 jogos'); return; }
-    setRodadaMsg('');
+    const jogosValidos = jogosRodada.filter(j => j.time_casa.trim() && j.time_fora.trim() && j.data_hora);
+    if (jogosValidos.length < 2) { setRodadaMsg('⚠️ Preencha pelo menos 2 jogos completos'); return; }
+    setCriandoRodada(true); setRodadaMsg('');
     try {
-      await axios.post(`${API}/admin/mestre/desafios`, { ...novaRodada, jogo_ids });
-      setRodadaMsg('✅ Rodada Mestre criada com sucesso!');
-      setJogosSelecionadosRodada({});
+      // 1. Cria o desafio
+      const r = await axios.post(`${API}/admin/desafios`, {
+        titulo: novaRodada.titulo,
+        campeonato: novaRodada.campeonato,
+        data_hora: new Date(jogosValidos[0].data_hora).toISOString(),
+        valor_cartela: novaRodada.valor_cartela,
+        valor_premio: novaRodada.valor_premio,
+      });
+      const desafio_id = r.data.id;
+      // 2. Adiciona cada jogo ao desafio
+      for (let i = 0; i < jogosValidos.length; i++) {
+        const j = jogosValidos[i];
+        await axios.post(`${API}/admin/desafios/jogo`, {
+          desafio_id,
+          ordem: i + 1,
+          time_casa: j.time_casa,
+          time_fora: j.time_fora,
+          data_hora: new Date(j.data_hora).toISOString(),
+        });
+      }
+      setRodadaMsg(`✅ Rodada criada com ${jogosValidos.length} jogo(s)!`);
       setNovaRodada({ titulo: '', campeonato: 'Brasileirão Série A', valor_cartela: 10, valor_premio: 500 });
+      setJogosRodada([{ time_casa: '', time_fora: '', data_hora: '' }]);
       load();
     } catch(e) {
-      setRodadaMsg('❌ ' + (e.response?.data?.detail || `[${e.response?.status}] Erro ao criar rodada`));
+      setRodadaMsg('❌ ' + (e.response?.data?.detail || 'Erro ao criar rodada'));
+    } finally {
+      setCriandoRodada(false);
     }
   };
+
+  const addJogoRodada = () => setJogosRodada(js => [...js, { time_casa: '', time_fora: '', data_hora: '' }]);
+  const removeJogoRodada = (i) => setJogosRodada(js => js.filter((_, idx) => idx !== i));
+  const updateJogoRodada = (i, field, val) => setJogosRodada(js => js.map((j, idx) => idx === i ? { ...j, [field]: val } : j));
 
   const confirmarImportacao = async () => {
     const selecionadosList = jogosApi.filter((_, i) => selecionados[i]);
@@ -299,7 +325,7 @@ export default function Admin() {
             {/* Criar Rodada Mestre */}
             <div style={{ background: 'white', borderRadius: 16, padding: '1.25rem', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', marginBottom: '1.5rem', border: '1px solid #eee' }}>
               <h3 style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: '0.25rem' }}>🏆 Criar Rodada Mestre (Bolsão Pix)</h3>
-              <p style={{ fontSize: 13, color: '#888', margin: '0 0 1rem' }}>Agrupe jogos existentes em uma rodada — usuários apostam em todos os placares</p>
+              <p style={{ fontSize: 13, color: '#888', margin: '0 0 1rem' }}>Cria um desafio com múltiplos jogos — usuários apostam em todos os placares</p>
 
               {rodadaMsg && (
                 <div style={{ background: rodadaMsg.startsWith('✅') ? '#e6fff3' : '#fef2f2', border: `1px solid ${rodadaMsg.startsWith('✅') ? '#c6edd9' : '#fca5a5'}`, color: rodadaMsg.startsWith('✅') ? '#00C16A' : '#dc2626', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 600, marginBottom: '1rem' }}>
@@ -307,7 +333,7 @@ export default function Admin() {
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Título da Rodada</label>
                   <input value={novaRodada.titulo} onChange={e => setNovaRodada(r => ({...r, titulo: e.target.value}))} placeholder="Ex: Rodada 17 — Brasileirão" style={inputStyle} />
@@ -328,28 +354,35 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>Selecionar Jogos ({Object.values(jogosSelecionadosRodada).filter(Boolean).length} selecionado(s))</label>
-                {jogos.filter(j => j.status === 'aberto').length === 0 ? (
-                  <div style={{ fontSize: 13, color: '#888', padding: '10px', background: '#fafafa', borderRadius: 8 }}>Nenhum jogo aberto disponível. Crie jogos individuais primeiro.</div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
-                    {jogos.filter(j => j.status === 'aberto').map(j => (
-                      <label key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, cursor: 'pointer', background: jogosSelecionadosRodada[j.id] ? '#f0f9f4' : '#fafafa', border: `1px solid ${jogosSelecionadosRodada[j.id] ? '#c6edd9' : '#eee'}`, minHeight: 44 }}>
-                        <input type="checkbox" checked={!!jogosSelecionadosRodada[j.id]} onChange={e => setJogosSelecionadosRodada(s => ({...s, [j.id]: e.target.checked}))} style={{ width: 16, height: 16, accentColor: '#00C16A', flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 13 }}>{j.time_casa} × {j.time_fora}</div>
-                          <div style={{ fontSize: 11, color: '#888' }}>{j.campeonato} · {new Date(j.data_hora).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
-                        </div>
-                      </label>
-                    ))}
+              <label style={{ ...labelStyle, marginBottom: 8 }}>Jogos da Rodada ({jogosRodada.length})</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
+                {jogosRodada.map((j, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 8, alignItems: 'end', background: '#fafafa', borderRadius: 10, padding: '10px 12px', border: '1px solid #eee' }}>
+                    <div>
+                      <label style={labelStyle}>Time Casa</label>
+                      <input value={j.time_casa} onChange={e => updateJogoRodada(i, 'time_casa', e.target.value)} placeholder="Ex: Flamengo" style={{ ...inputStyle, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Time Fora</label>
+                      <input value={j.time_fora} onChange={e => updateJogoRodada(i, 'time_fora', e.target.value)} placeholder="Ex: Palmeiras" style={{ ...inputStyle, fontSize: 13 }} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Data/Hora</label>
+                      <input type="datetime-local" value={j.data_hora} onChange={e => updateJogoRodada(i, 'data_hora', e.target.value)} style={{ ...inputStyle, fontSize: 13 }} />
+                    </div>
+                    <button onClick={() => removeJogoRodada(i)} disabled={jogosRodada.length === 1} style={{ background: 'transparent', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: 8, padding: '0 10px', fontSize: 16, cursor: jogosRodada.length === 1 ? 'not-allowed' : 'pointer', minHeight: 44, opacity: jogosRodada.length === 1 ? 0.4 : 1 }}>✕</button>
                   </div>
-                )}
+                ))}
               </div>
 
-              <button onClick={criarRodadaMestre} style={{ background: 'linear-gradient(135deg,#FFB800,#ff8f00)', color: 'white', border: 'none', borderRadius: 12, padding: '12px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 3px 12px rgba(255,184,0,0.3)', minHeight: 44 }}>
-                🏆 Criar Rodada Mestre
-              </button>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button onClick={addJogoRodada} style={{ background: '#f0f9f4', color: '#00C16A', border: '1px solid #c6edd9', borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', minHeight: 44 }}>
+                  + Adicionar Jogo
+                </button>
+                <button onClick={criarRodadaMestre} disabled={criandoRodada} style={{ background: criandoRodada ? '#aaa' : 'linear-gradient(135deg,#FFB800,#ff8f00)', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: criandoRodada ? 'not-allowed' : 'pointer', boxShadow: criandoRodada ? 'none' : '0 3px 12px rgba(255,184,0,0.3)', minHeight: 44 }}>
+                  {criandoRodada ? '⏳ Criando...' : '🏆 Criar Rodada Mestre'}
+                </button>
+              </div>
             </div>
 
             {/* Criar + Resultado */}
