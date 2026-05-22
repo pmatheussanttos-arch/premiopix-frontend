@@ -79,12 +79,9 @@ export default function Admin() {
   const buscarJogosApi = async () => {
     setImportStep('loading'); setImportMsg(''); setJogosApi([]); setSelecionados({});
     try {
-      console.log('[Admin] Buscando jogos do Brasileirão via TheSportsDB...');
-      const r = await axios.get(
-        'https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4351',
-        { timeout: 15000 }
-      );
-      console.log('[Admin] TheSportsDB response:', r.data);
+      console.log('[Admin] Buscando jogos do Brasileirão...');
+      const r = await axios.get(`${API}/admin/buscar-jogos-semana`, { timeout: 15000 });
+      console.log('[Admin] Resposta:', r.data);
       const events = r.data?.events || [];
       const lista = events.map(ev => ({
         fixture_api_id: ev.idEvent,
